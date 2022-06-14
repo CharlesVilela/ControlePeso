@@ -29,6 +29,7 @@ public class Usuario {
     private Genero genero;
 
     private Double pesoInicial;
+    private Double pesoAtual;
     private Double pesoDesejado;
     private LocalDate dataInicial;
     private LocalDate dataObjetivo;

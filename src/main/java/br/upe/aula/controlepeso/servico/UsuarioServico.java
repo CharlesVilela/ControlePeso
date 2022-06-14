@@ -36,6 +36,7 @@ public class UsuarioServico {
 
     public Usuario incluir(Usuario usuario) {
         usuario.setId(null);
+        usuario.setPesoAtual(usuario.getPesoInicial());
         usuario.setDataInicial(LocalDate.now());
 
         String mensagem = this.validarCamposUsuario(usuario);
@@ -101,9 +102,11 @@ public class UsuarioServico {
 
         usuario.setDataInicial(LocalDate.now());
 
-        this.adicionarAoHistorico(usuario);
+        String mensagem = "Ok";// this.validarCamposUsuario(usuario);
 
-        return usuarioRepositorio.save(usuario);
+        this.usuarioRepositorio.save(usuario);
+        this.adicionarAoHistorico(usuario);
+        return usuario;
     }
 
     public Usuario logar(String email) {
@@ -121,6 +124,15 @@ public class UsuarioServico {
     }
 
     public List<Historico> exibirHistorico(Long id) {
+
+        if (id == null || id == 01) {
+            throw new RuntimeException("Informe um identificador de usuário.");
+        }
+
+        if (!this.usuarioRepositorio.existsById(id)) {
+            throw new RuntimeException("Não existe usuario cadastrado com o identificador: " + id);
+        }
+
         return this.historicoRepositorio.exibirHistorico(id);
     }
 
@@ -188,7 +200,6 @@ public class UsuarioServico {
             mensagem = "O campo Data Objetivo não pode ser vazio. Verifique e tente novamente!";
 
         // 2. Verificar validade do email
-
         if (this.validarEmail(usuario.getEmail()) == false)
             mensagem = "E-mail invalido. Informe um endereço de e-mail válido!";
 
