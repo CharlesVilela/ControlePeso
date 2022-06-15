@@ -34,13 +34,13 @@ public class PesoService {
 
         double altura = optUSUARIO.get().getAltura() / 100;
 
-        Optional<Peso> optPeso = pesoRepositorio.findFirstByUsuarioEmailOrderDataDesc(email);
+        Peso optPeso = pesoRepositorio.findFirstByUsuarioEmail(email);
 
-        if (optPeso.isEmpty()) {
+        if (optPeso == null) {
             throw new RuntimeException("Usuario não tem peso cadastrado!");
         }
 
-        double peso = optPeso.get().getPeso();
+        double peso = optPeso.getPeso();
 
         double IMC = peso / (altura * altura);
 
@@ -51,7 +51,7 @@ public class PesoService {
 
         // }
 
-        // retorno.setIMC(IMCVO.builder().IMC(IMC).classificacao(grau).build());
+        retorno.setIMC(IMCVO.builder().IMC(IMC).classificacao(grau).build());
 
         return retorno;
     }
