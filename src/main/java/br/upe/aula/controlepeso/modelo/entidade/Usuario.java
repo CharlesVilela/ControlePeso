@@ -1,8 +1,9 @@
-package br.upe.aula.controlepeso.entidade;
+package br.upe.aula.controlepeso.modelo.entidade;
 
 import java.time.LocalDate;
 import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -33,5 +34,8 @@ public class Usuario {
     private Double pesoDesejado;
     private LocalDate dataInicial;
     private LocalDate dataObjetivo;
+
+    @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL)
+    private List<Peso> pesos;
 
 }

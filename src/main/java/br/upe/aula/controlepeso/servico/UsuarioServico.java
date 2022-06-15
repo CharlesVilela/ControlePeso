@@ -17,12 +17,14 @@ import java.util.concurrent.TimeUnit;
 
 import javax.mail.internet.InternetAddress;
 
+import org.apache.tomcat.util.buf.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.web.ServerProperties.Undertow.Options;
 import org.springframework.stereotype.Service;
 
-import br.upe.aula.controlepeso.entidade.Historico;
-import br.upe.aula.controlepeso.entidade.Usuario;
-import br.upe.aula.controlepeso.repositorio.HistoricoRepositorio;
+import br.upe.aula.controlepeso.modelo.entidade.Peso;
+import br.upe.aula.controlepeso.modelo.entidade.Usuario;
+import br.upe.aula.controlepeso.repositorio.PesoRepositorio;
 import br.upe.aula.controlepeso.repositorio.UsuarioRepositorio;
 
 @Service
@@ -32,7 +34,7 @@ public class UsuarioServico {
     private UsuarioRepositorio usuarioRepositorio;
 
     @Autowired
-    private HistoricoRepositorio historicoRepositorio;
+    private PesoRepositorio pesoRepositorio;
 
     public Usuario incluir(Usuario usuario) {
         usuario.setId(null);
@@ -80,6 +82,12 @@ public class UsuarioServico {
             throw new RuntimeException("Informe um identificador de usuário.");
         }
 
+        Optional<Usuario> usuarioBase = this.usuarioRepositorio.findById(usuario.getId());
+
+        if (usuarioBase.isEmpty()) {
+            throw new RuntimeException("Não existe usuario cadastrado com o identificador" + usuario.getId());
+        }
+
         if (!this.usuarioRepositorio.existsById(usuario.getId())) {
             throw new RuntimeException("Não existe usuario cadastrado com o identificador: " + usuario.getId());
         }
@@ -114,16 +122,16 @@ public class UsuarioServico {
     }
 
     public void adicionarAoHistorico(Usuario usuario) {
-        Historico historico = new Historico();
-        historico.setId(null);
-        historico.setPeso(usuario.getPesoInicial());
-        historico.setDataInsercao(usuario.getDataInicial());
-        historico.setUsuario(usuario);
+        Peso peso = new Peso();
+        peso.setId(null);
+        peso.setPeso(usuario.getPesoInicial());
+        peso.setData(usuario.getDataInicial());
+        peso.setUsuario(usuario);
 
-        this.historicoRepositorio.save(historico);
+        this.pesoRepositorio.save(peso);
     }
 
-    public List<Historico> exibirHistorico(Long id) {
+    public List<Peso> exibirHistorico(Long id) {
 
         if (id == null || id == 01) {
             throw new RuntimeException("Informe um identificador de usuário.");
@@ -133,7 +141,7 @@ public class UsuarioServico {
             throw new RuntimeException("Não existe usuario cadastrado com o identificador: " + id);
         }
 
-        return this.historicoRepositorio.exibirHistorico(id);
+        return this.pesoRepositorio.findAll();
     }
 
     public Double calcularIMC(Long id) {
@@ -236,6 +244,20 @@ public class UsuarioServico {
             result = false;
         }
         return result;
+    }
+
+    public Usuario buscarUsuario(String email) {
+
+        if (email.isEmpty() || email == null) {
+            throw new RuntimeException("Informe um email valido");
+        }
+        Optional<Usuario> usuario = this.usuarioRepositorio.findFirstByEmailIgnoreCase(email.toUpperCase());
+
+        if (usuario == null) {
+            throw new RuntimeException("Este e-mail não está cadastrado");
+        }
+
+        return usuario.get();
     }
 
 }

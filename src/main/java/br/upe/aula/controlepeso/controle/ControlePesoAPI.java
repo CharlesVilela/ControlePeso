@@ -15,8 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.upe.aula.controlepeso.entidade.Historico;
-import br.upe.aula.controlepeso.entidade.Usuario;
+import br.upe.aula.controlepeso.modelo.entidade.Usuario;
 import br.upe.aula.controlepeso.servico.UsuarioServico;
 
 @RestController
@@ -58,28 +57,14 @@ public class ControlePesoAPI {
         return this.usuarioServico.atualizarPeso(usuario);
     }
 
+    @GetMapping("/usuario/email/{email}")
+    public Usuario buscarUsuario(@PathVariable String email) {
+        return this.usuarioServico.buscarUsuario(email);
+    }
+
     @PostMapping("/logar")
     public Usuario logar(@RequestParam(value = "email") String email) {
         return this.usuarioServico.logar(email);
     }
-
-    @GetMapping("/historico/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    public List<Historico> exibirHistorico(@PathVariable Long id) {
-        return this.usuarioServico.exibirHistorico(id);
-    }
-
-    @GetMapping("/imc/{id}")
-    @ResponseStatus(HttpStatus.OK)
-    public Double calcularIMC(@PathVariable Long id) {
-        return this.usuarioServico.calcularIMC(id);
-
-    }
-
-    // @GetMapping("/comparativo/{id}")
-    // @ResponseStatus(HttpStatus.OK)
-    // public Double comparativo(@PathVariable Long id) {
-    // return this.usuarioServico.comparativo(id);
-    // }
 
 }
