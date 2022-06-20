@@ -84,26 +84,27 @@ public class UsuarioServico {
         return usuarioRepositorio.save(usuario);
     }
 
-    public Usuario atualizarPeso(Usuario usuario) {
-        if (usuario == null) {
-            throw new RuntimeException("Informe os dados do usuário");
-        }
+    public Usuario atualizarPeso(Long id, Double peso) {
 
-        if (usuario.getId() == null || usuario.getId() == 0) {
+        if (id == null) {
             throw new RuntimeException("Informe um identificador de usuário.");
         }
 
-        if (!this.usuarioRepositorio.existsById(usuario.getId())) {
-            throw new RuntimeException("Não existe usuario cadastrado com o identificador: " + usuario.getId());
+        if (!this.usuarioRepositorio.existsById(id)) {
+            throw new RuntimeException("Não existe usuario cadastrado com o identificador: " + id);
         }
 
-        usuario.setDataInicial(LocalDate.now());
+        if (peso == null || peso < 30) {
+            throw new RuntimeException("Peso não pode ser vazio ou menor que 30kg. Informe um peso válido!");
+        }
 
-        String mensagem = "Ok";// this.validarCamposUsuario(usuario);
+        Optional<Usuario> usuarioBase = this.usuarioRepositorio.findById(id);
 
-        this.usuarioRepositorio.save(usuario);
-        this.adicionarAoHistorico(usuario);
-        return usuario;
+        usuarioBase.get().setPesoInicial(peso);
+
+        this.usuarioRepositorio.save(usuarioBase.get());
+        this.adicionarAoHistorico(usuarioBase.get());
+        return usuarioBase.get();
     }
 
     public Usuario logar(String email) {
@@ -114,7 +115,7 @@ public class UsuarioServico {
         Peso peso = new Peso();
         peso.setId(null);
         peso.setPeso(usuario.getPesoInicial());
-        peso.setData(usuario.getDataInicial());
+        peso.setData(LocalDate.now());
         peso.setUsuario(usuario);
 
         this.pesoRepositorio.save(peso);
@@ -132,48 +133,6 @@ public class UsuarioServico {
 
         return this.pesoRepositorio.findAll();
     }
-
-    public Double calcularIMC(Long id) {
-        // Menor que 18,5 = abaixo do peso.
-        // Entre 18,5 e 24,9 = peso normal.
-        // Entre 25 e 29,9 = sobrepeso.
-        // Entre 30 e 34,99 = obesidade grau I.
-        // Entre 35 e 39,99 = obesidade grau II (severa).
-        // Acima de 40 = obesidade grau III (mórbida).
-        // IMC = Massa (kg) ÷ Altura (m)².
-
-        Usuario usuario = this.usuarioRepositorio.buscarUsuarioPorId(id);
-
-        int altura = usuario.getAltura();
-        Double alturaConvertidaMetros = (Double.valueOf(altura) / 100);
-
-        Double IMC = usuario.getPesoInicial() / (alturaConvertidaMetros * alturaConvertidaMetros);
-
-        return IMC;
-    }
-
-    // public Double comparativo(Long id) {
-
-    // List<Historico> historico = this.historicoRepositorio.exibirHistorico(id);
-
-    // LocalDate now = LocalDate.now();
-
-    // LocalDate ultimaPeso = null;
-
-    // for (int i = 1; i <= historico.size(); i++) {
-
-    // if (historico.get(i -
-    // 1).getDataInsercao().isBefore(historico.get(i).getDataInsercao())) {
-    // ultimaPeso = historico.get(i).getDataInsercao();
-    // }
-
-    // }
-
-    // System.out.println(ultimaPeso);
-
-    // return null;
-
-    // }
 
     public String validarCamposUsuario(Usuario usuario) {
 

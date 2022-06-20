@@ -15,7 +15,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.upe.aula.controlepeso.modelo.VO.MonitoramentoVO;
 import br.upe.aula.controlepeso.modelo.entidade.Usuario;
+import br.upe.aula.controlepeso.servico.PesoService;
 import br.upe.aula.controlepeso.servico.UsuarioServico;
 
 @RestController
@@ -24,6 +26,9 @@ public class ControlePesoAPI {
 
     @Autowired
     private UsuarioServico usuarioServico;
+
+    @Autowired
+    private PesoService pesoServico;
 
     @GetMapping("/usuarios")
     @ResponseStatus(HttpStatus.OK)
@@ -52,9 +57,8 @@ public class ControlePesoAPI {
 
     @PutMapping("usuario/novopeso/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public Usuario alterarPesoUsuario(@PathVariable Long id, @RequestBody Usuario usuario) {
-        usuario.setId(id);
-        return this.usuarioServico.atualizarPeso(usuario);
+    public Usuario alterarPesoUsuario(@PathVariable Long id, @RequestParam(value = "peso") Double peso) {
+        return this.usuarioServico.atualizarPeso(id, peso);
     }
 
     @GetMapping("/usuario/email/{email}")
@@ -65,6 +69,16 @@ public class ControlePesoAPI {
     @PostMapping("/logar")
     public Usuario logar(@RequestParam(value = "email") String email) {
         return this.usuarioServico.logar(email);
+    }
+
+    @GetMapping("/imc/{email}")
+    public MonitoramentoVO calcularIMC(@PathVariable String email) {
+        return this.pesoServico.calcularIMC(email);
+    }
+
+    @GetMapping("/comparativo/{email}")
+    public MonitoramentoVO comparativo(@PathVariable String email) {
+        return this.pesoServico.comparativo(email);
     }
 
 }

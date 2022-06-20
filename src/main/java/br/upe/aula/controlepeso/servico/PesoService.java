@@ -1,5 +1,7 @@
 package br.upe.aula.controlepeso.servico;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +24,7 @@ public class PesoService {
     @Autowired
     private UsuarioRepositorio usuarioRepositorio;
 
-    private MonitoramentoVO montarMonitoramento(String email) {
+    public MonitoramentoVO calcularIMC(String email) {
 
         MonitoramentoVO retorno = new MonitoramentoVO();
 
@@ -32,7 +34,7 @@ public class PesoService {
             throw new RuntimeException("Usuario não cadastrado!");
         }
 
-        double altura = optUSUARIO.get().getAltura() / 100;
+        double altura = (Double.valueOf(optUSUARIO.get().getAltura()) / 100);
 
         Peso optPeso = pesoRepositorio.findFirstByUsuarioEmail(email);
 
@@ -44,16 +46,42 @@ public class PesoService {
 
         double IMC = peso / (altura * altura);
 
+        System.out.println(IMC);
+
         IMCEnum grau = IMCEnum.ABAIXO_DO_PESO;
 
-        // Finalizar o IF
-        // if(IMC < 19){
-
-        // }
+        if (IMC < 18.5) {
+            grau = IMCEnum.ABAIXO_DO_PESO;
+        } else if (IMC >= 18.5 && IMC < 25) {
+            grau = IMCEnum.PESO_IDEAL;
+        } else if (IMC >= 25) {
+            grau = IMCEnum.ACIMA_DO_PESO;
+        }
 
         retorno.setIMC(IMCVO.builder().IMC(IMC).classificacao(grau).build());
 
         return retorno;
+    }
+
+    public MonitoramentoVO comparativo(String email) {
+
+        MonitoramentoVO retorno = new MonitoramentoVO();
+
+        Optional<Usuario> optUsuario = this.usuarioRepositorio.findFirstByEmailIgnoreCase(email);
+
+        if (optUsuario.isEmpty()) {
+            throw new RuntimeException("Usuario não cadastrado!");
+        }
+
+        List<Peso> optPesos = this.pesoRepositorio.findAllPesos(optUsuario.get().getId());
+
+        // Collections.sort(slist, Collections.reverseOrder());
+
+        for (int i = 0; i < optPesos.size(); i++) {
+            System.out.println(optPesos.get(i).getPeso() + ", " + optPesos.get(i).getData());
+        }
+
+        return null;
     }
 
 }
