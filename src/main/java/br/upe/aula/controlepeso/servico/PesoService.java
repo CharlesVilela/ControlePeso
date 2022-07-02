@@ -1,6 +1,5 @@
 package br.upe.aula.controlepeso.servico;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -78,7 +77,8 @@ public class PesoService {
         // Collections.sort(slist, Collections.reverseOrder());
 
         for (int i = 0; i < optPesos.size(); i++) {
-            System.out.println(optPesos.get(i).getPeso() + ", " + optPesos.get(i).getData());
+            System.out.println(optPesos.get(i).getPeso() + ", " +
+                    optPesos.get(i).getData());
         }
 
         return null;

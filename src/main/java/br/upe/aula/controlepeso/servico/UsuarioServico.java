@@ -1,13 +1,13 @@
 package br.upe.aula.controlepeso.servico;
 
-import java.time.LocalDate;
-import java.time.Period;
 import java.util.List;
 
 import java.util.Optional;
 
 import javax.mail.internet.InternetAddress;
 
+import org.joda.time.Days;
+import org.joda.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,8 +15,10 @@ import br.upe.aula.controlepeso.modelo.entidade.Peso;
 import br.upe.aula.controlepeso.modelo.entidade.Usuario;
 import br.upe.aula.controlepeso.repositorio.PesoRepositorio;
 import br.upe.aula.controlepeso.repositorio.UsuarioRepositorio;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 public class UsuarioServico {
 
     @Autowired
@@ -30,19 +32,11 @@ public class UsuarioServico {
         usuario.setPesoAtual(usuario.getPesoInicial());
         usuario.setDataInicial(LocalDate.now());
 
-        String mensagem = this.validarCamposUsuario(usuario);
+        this.validarPreenchimentoCamposObrigatorios(usuario);
 
-        System.out.println("Aqui a mensagem recebida: " + mensagem);
-
-        if (mensagem != "Ok") {
-            throw new RuntimeException(mensagem);
-        } else {
-            System.out.println(mensagem);
-            Usuario novoUsuario = usuarioRepositorio.save(usuario);
-
-            this.adicionarAoHistorico(novoUsuario);
-            return novoUsuario;
-        }
+        Usuario novoUsuario = usuarioRepositorio.save(usuario);
+        this.adicionarAoHistorico(novoUsuario);
+        return novoUsuario;
     }
 
     public List<Usuario> listar() {
@@ -107,10 +101,6 @@ public class UsuarioServico {
         return usuarioBase.get();
     }
 
-    public Usuario logar(String email) {
-        return usuarioRepositorio.logar(email);
-    }
-
     public void adicionarAoHistorico(Usuario usuario) {
         Peso peso = new Peso();
         peso.setId(null);
@@ -134,66 +124,6 @@ public class UsuarioServico {
         return this.pesoRepositorio.findAll();
     }
 
-    public String validarCamposUsuario(Usuario usuario) {
-
-        String mensagem = "Ok";
-
-        // // 1. Preenchimento dos campos obrigatorios
-        if (usuario.getNome().trim().isEmpty() ||
-                usuario.getEmail().trim().isEmpty())
-            mensagem = "Os campos Nome ou E-mail não podem ser vazios. Verifique e tente novamente!";
-
-        if (usuario.getGenero() == null)
-            mensagem = "O campo Genêro não pode ser vazio. Verifique e tente novamente!";
-
-        if (usuario.getAltura() == null)
-            mensagem = "O campo Altura não pode ser vazio. Verifique e tente novamente!";
-
-        if (usuario.getPesoInicial() == null || usuario.getPesoDesejado() == null)
-            mensagem = "Os campos Peso Inicial ou Peso Desejado não podem ser vazio. Verifique e tente novamente!";
-
-        if (usuario.getDataObjetivo() == null)
-            mensagem = "O campo Data Objetivo não pode ser vazio. Verifique e tente novamente!";
-
-        // 2. Verificar validade do email
-        if (this.validarEmail(usuario.getEmail()) == false)
-            mensagem = "E-mail invalido. Informe um endereço de e-mail válido!";
-
-        // 3. Validar se existe email já cadastrado
-        Usuario verificarEmail = this.usuarioRepositorio.logar(usuario.getEmail());
-        if (verificarEmail != null)
-            mensagem = "O E-mail que você tentou se cadastrar já existe!";
-
-        // 4. A altura deve ser maior do que 100 camada
-        if (usuario.getAltura() <= 100)
-            mensagem = "Altura inválida. A altura deve ser maior que 100 centimentros!";
-
-        // 5. Peso inicial deve ser maior que 30Kg
-        if (usuario.getPesoInicial() <= 30)
-            mensagem = "Peso inicial inválido. O peso inicial deve ser maior que 30Kg!";
-
-        // 6. Verificar se a data do peso objetivo deve ser no minimo de uma semana
-        LocalDate dataAtual = LocalDate.now();
-
-        Period periodo = Period.between(usuario.getDataObjetivo(), dataAtual);
-
-        if (periodo.getDays() < 7)
-            mensagem = "A data objetivo deve ser de pelo menos uma semana!";
-
-        return mensagem;
-    }
-
-    public boolean validarEmail(String email) {
-        boolean result = true;
-        try {
-            InternetAddress emailValidar = new InternetAddress(email);
-            emailValidar.validate();
-        } catch (Exception e) {
-            result = false;
-        }
-        return result;
-    }
-
     public Usuario buscarUsuario(String email) {
 
         if (email.isEmpty() || email == null) {
@@ -206,6 +136,57 @@ public class UsuarioServico {
         }
 
         return usuario.get();
+    }
+
+    private void validarPreenchimentoCamposObrigatorios(Usuario usuario) {
+
+        if (usuario.getNome().trim().isEmpty() ||
+                usuario.getEmail().trim().isEmpty() || usuario.getAltura() == 0
+                || usuario.getPesoInicial() == 0 || usuario.getPesoDesejado() == 0
+                || usuario.getDataObjetivo() == null) {
+            log.error("Os campos do usuário não podem ser vazios");
+            throw new RuntimeException(
+                    "Os campos: Nome, E-mail, Altura, Peso Inicial, Peso Desejado e Peso Objetivo não podem ser vazios ou não ter valor. Verifique os campos e tente novamente!");
+        }
+
+        this.validarEmail(usuario.getEmail());
+
+        if (usuario.getGenero() == null) {
+            log.error("O campo Genero do usuário não pode ser vazio");
+            throw new RuntimeException("O Genero não pode ser vazio. Digite um Genero valido!");
+        }
+
+        if (usuario.getAltura() <= 100) {
+            log.error("O campo Altura do usuário não pode ser menor que 100 centimentros");
+            throw new RuntimeException("A Altura não pode ser menor que 100 centimentros. Digite uma Altura valida!");
+        }
+
+        if (usuario.getPesoInicial() <= 30) {
+            log.error("O campo Peso Inicial do usuário não pode ser menor que 30Kg");
+            throw new RuntimeException(
+                    "O campo Peso Inicial do usuario não pode ser menor que 30Kg. Digite um peso valido!");
+        }
+
+        if (usuario.getDataInicial().isAfter(usuario.getDataObjetivo())) {
+            log.error("O campo Data Objetivo do usuario não pode ser menor que data atual!");
+            throw new RuntimeException(
+                    "Data objetivo invalida. O campo Data Objetivo do usuario não pode ser menor que data atual!");
+        }
+
+        if (Days.daysBetween(usuario.getDataInicial(), usuario.getDataObjetivo()).getDays() < 7) {
+            log.error("Data Objetivo invalida. Informe uma data valida!");
+            throw new RuntimeException(
+                    "Campo data objetivo invalido. O campo data objetivo deve ser de no minimo uma semana!");
+        }
+    }
+
+    private void validarEmail(String email) {
+        try {
+            InternetAddress emailValidar = new InternetAddress(email);
+            emailValidar.validate();
+        } catch (Exception e) {
+            throw new RuntimeException("E-mail invalido infome um email bslido!", e);
+        }
     }
 
 }

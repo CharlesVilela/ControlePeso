@@ -1,6 +1,5 @@
 package br.upe.aula.controlepeso.modelo.entidade;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import javax.persistence.CascadeType;
@@ -11,6 +10,10 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
+
+import org.joda.time.LocalDate;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import lombok.Data;
 
@@ -31,7 +34,11 @@ public class Usuario {
     private Double pesoInicial;
     private Double pesoAtual;
     private Double pesoDesejado;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate dataInicial;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate dataObjetivo;
 
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL)
